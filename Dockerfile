@@ -1,4 +1,4 @@
-FROM node:18
+FROM node:19
 WORKDIR /usr/src/app
 
 ARG NPM_REGISTRY='https://registry.npmjs.org'
