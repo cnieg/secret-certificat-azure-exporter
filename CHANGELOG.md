@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/cnieg/secret-certificat-azure-exporter/compare/1.0.1...1.0.2) (2023-04-20)
+
+
+### Bug Fixes
+
+* use node:lts as source docker image ([392f3d2](https://github.com/cnieg/secret-certificat-azure-exporter/commit/392f3d2885a8b59f3228ce9330bd73c3224c089f))
+
 ## [1.0.1](https://github.com/cnieg/secret-certificat-azure-exporter/compare/1.0.0...1.0.1) (2023-04-20)
 
 
