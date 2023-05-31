@@ -109,7 +109,7 @@ function ParseValue(subscriptionlist) {
         }
 
         ApplicationSecretStatus.set({ application: application.displayName, type: "secret" }, date_restant);
-        // Si la métriques existe déjà, on la set pas de nouveau dans le registre
+        // Si la métrique existe déjà, on ne la défini pas dans le registre
         try { register.registerMetric(ApplicationSecretStatus); } catch { }
         i++
       })
