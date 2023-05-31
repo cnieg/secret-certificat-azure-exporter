@@ -100,9 +100,9 @@ function ParseValue(subscriptionlist) {
         var date_now = new Date().getTime();
         var date_end = new Date(password.endDateTime).getTime();
         
-        // Vérifier si date_start est après date_end
+        // Vérifier si date_now est après date_end
         if (date_now > date_end) {
-            console.error("Le Certificat de l'application " + application.displayName + " à expiré le " + password.endDateTime);
+            console.error("Le Certificat de l'application " + application.displayName + " a expiré le " + password.endDateTime);
             var date_restant = 0;
         } else {
             var date_restant = Math.ceil((date_end - date_now) / (1000 * 3600 * 24));
