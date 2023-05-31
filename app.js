@@ -97,9 +97,16 @@ function ParseValue(subscriptionlist) {
           labelNames: ['application', 'type'],
         });
 
-        var date_start = new Date(password.startDateTime).getTime();
+        var date_start = new Date().getTime();
         var date_end = new Date(password.endDateTime).getTime();
-        var date_restant = Math.ceil((date_end - date_start) / (1000 * 3600 * 24));
+        
+        // Vérifier si date_start est après date_end
+        if (date_start > date_end) {
+            console.error("Le Certificat de l'application " + application.displayName + " à expiré le " + password.endDateTime);
+            var date_restant = 0;
+        } else {
+            var date_restant = Math.ceil((date_end - date_start) / (1000 * 3600 * 24));
+        }
 
         ApplicationSecretStatus.set({ application: application.displayName, type: "secret" }, date_restant);
         // Si la métriques existe déjà, on la set pas de nouveau dans le registre
