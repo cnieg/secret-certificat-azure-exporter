@@ -102,7 +102,7 @@ function ParseValue(subscriptionlist) {
         
         // Vérifier si date_now est après date_end
         if (date_now > date_end) {
-            console.error("Le Certificat de l'application " + application.displayName + " a expiré le " + password.endDateTime);
+            console.error("Le Secret de l'application " + application.displayName + " a expiré le " + password.endDateTime);
             var date_restant = 0;
         } else {
             var date_restant = Math.ceil((date_end - date_now) / (1000 * 3600 * 24));
@@ -125,9 +125,17 @@ function ParseValue(subscriptionlist) {
           labelNames: ['application', 'type'],
         });
 
-        var date_start = new Date(certificat.startDateTime).getTime();
+        var date_now = new Date().getTime();
         var date_end = new Date(certificat.endDateTime).getTime();
-        var date_restant = Math.ceil((date_end - date_start) / (1000 * 3600 * 24));
+         // Vérifier si date_now est après date_end
+        if (date_now > date_end) {
+            console.error("Le Certificat de l'application " + application.displayName + " a expiré le " + certificat.endDateTime);
+            var date_restant = 0;
+          } else {
+            var date_restant = Math.ceil((date_end - date_now) / (1000 * 3600 * 24));
+          }
+
+
         ApplicationCertificatStatus.set({ application: application.displayName, type: "certificat" }, date_restant);
         // Si la métriques existe déjà, on la set pas de nouveau dans le registre
         try { register.registerMetric(ApplicationCertificatStatus); } catch { }
