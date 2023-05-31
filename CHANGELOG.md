@@ -1,3 +1,12 @@
+## [1.0.4](https://github.com/cnieg/secret-certificat-azure-exporter/compare/1.0.3...1.0.4) (2023-05-31)
+
+
+### Bug Fixes
+
+* certificat expiration date ([8ba7c82](https://github.com/cnieg/secret-certificat-azure-exporter/commit/8ba7c8265e1b81e8ffa37dc22d2106f7bc3a2747))
+* expiration date for certificate ([296a5c5](https://github.com/cnieg/secret-certificat-azure-exporter/commit/296a5c5a0b4eb9f45c3483303681379809968a0a))
+* modif date ([ca40d28](https://github.com/cnieg/secret-certificat-azure-exporter/commit/ca40d2831fd71dcfe21a6d897633f8a414dd0bc0))
+
 ## [1.0.3](https://github.com/cnieg/secret-certificat-azure-exporter/compare/1.0.2...1.0.3) (2023-05-31)
 
 
