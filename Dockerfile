@@ -1,4 +1,4 @@
-FROM node:lts
+FROM node:18.18.2-bookworm-slim
 WORKDIR /usr/src/app
 
 ARG NPM_REGISTRY='https://registry.npmjs.org'
