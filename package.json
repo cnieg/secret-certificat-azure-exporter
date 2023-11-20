@@ -1,6 +1,6 @@
 {
   "name": "secret-certificat-azure-exporter",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Exports the status of Azure secrets and certificates as Prometheus metrics",
   "main": "app.js",
   "scripts": {
