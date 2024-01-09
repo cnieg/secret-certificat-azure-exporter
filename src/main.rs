@@ -1,8 +1,8 @@
-use axum::{routing::get, Router};
+use axum::{http::StatusCode, response::IntoResponse, routing::get, Router};
 use std::env;
 
-async fn get_subscription_list() -> String {
-    "".to_string()
+async fn get_subscription_list() -> impl IntoResponse {
+    (StatusCode::INTERNAL_SERVER_ERROR, "".to_string())
 }
 
 async fn handler() -> String {
