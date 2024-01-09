@@ -1,7 +1,9 @@
 use axum::{routing::get, Router};
 use std::env;
 
-fn get_subscription_list() {}
+async fn get_subscription_list() -> String {
+    "".to_string()
+}
 
 async fn handler() -> String {
     "I'm Alive :D".to_string()
@@ -21,7 +23,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "tenant_id={tenant_id} client_id={client_id} client_secret={client_secret} scope={scope}"
     );
 
-    let app = Router::new().route("/", get(handler));
+    let app = Router::new()
+        .route("/", get(handler))
+        .route("/metrics", get(get_subscription_list));
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await?;
 
