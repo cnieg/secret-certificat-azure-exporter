@@ -1,12 +1,13 @@
-use axum::{http::StatusCode, routing::get, Router};
+use axum::{extract::State, http::StatusCode, routing::get, Router};
+use reqwest::Client;
 use std::env;
 
-async fn get_subscription_list() -> Result<String, String> {
+async fn get_subscription_list(client: Client) -> Result<String, String> {
     Ok("".to_string())
 }
 
-async fn get_subscription_list_handler() -> (StatusCode, String) {
-    match get_subscription_list().await {
+async fn get_subscription_list_handler(State(client): State<Client>) -> (StatusCode, String) {
+    match get_subscription_list(client).await {
         Ok(res) => (StatusCode::OK, res),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e),
     }
@@ -30,9 +31,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "tenant_id={tenant_id} client_id={client_id} client_secret={client_secret} scope={scope}"
     );
 
+    // Create a reqwest client
+    let client = Client::new();
+
     let app = Router::new()
         .route("/", get(root_handler))
-        .route("/metrics", get(get_subscription_list_handler));
+        .route("/metrics", get(get_subscription_list_handler))
+        .with_state(client);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await?;
 
