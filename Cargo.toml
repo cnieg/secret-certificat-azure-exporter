@@ -7,8 +7,8 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = "0.7"
-tokio = { version="1.35.1", features=["full"] }
+axum = { version = "0.7", default-features = false, features = ["http1", "tokio"] }
+tokio = { version = "1.35.1", default-features = false, features = ["macros", "net", "rt-multi-thread"] }
 
 [profile.release]
 strip = true	    # Automatically strip symbols from the binary
