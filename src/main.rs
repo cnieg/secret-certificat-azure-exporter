@@ -1,11 +1,18 @@
-use axum::{http::StatusCode, response::IntoResponse, routing::get, Router};
+use axum::{http::StatusCode, routing::get, Router};
 use std::env;
 
-async fn get_subscription_list() -> impl IntoResponse {
-    (StatusCode::INTERNAL_SERVER_ERROR, "".to_string())
+async fn get_subscription_list() -> Result<String, String> {
+    Ok("".to_string())
 }
 
-async fn handler() -> String {
+async fn get_subscription_list_handler() -> (StatusCode, String) {
+    match get_subscription_list().await {
+        Ok(res) => (StatusCode::OK, res),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e),
+    }
+}
+
+async fn root_handler() -> String {
     "I'm Alive :D".to_string()
 }
 
@@ -24,8 +31,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let app = Router::new()
-        .route("/", get(handler))
-        .route("/metrics", get(get_subscription_list));
+        .route("/", get(root_handler))
+        .route("/metrics", get(get_subscription_list_handler));
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await?;
 
