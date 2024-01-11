@@ -1,12 +1,21 @@
 use axum::{extract::State, http::StatusCode, routing::get, Router};
 use std::env;
+use std::sync::Arc;
 
-async fn get_subscription_list(client: Client) -> Result<String, String> {
+#[derive(Clone)]
+struct AppState {
+    tenant_id: Arc<String>,
+    client_id: Arc<String>,
+    client_secret: Arc<String>,
+    http_client: reqwest::Client,
+}
+
+async fn get_subscription_list(state: AppState) -> Result<String, String> {
     Ok("".to_string())
 }
 
-async fn get_subscription_list_handler(State(client): State<Client>) -> (StatusCode, String) {
-    match get_subscription_list(client).await {
+async fn get_subscription_list_handler(State(state): State<AppState>) -> (StatusCode, String) {
+    match get_subscription_list(state).await {
         Ok(res) => (StatusCode::OK, res),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e),
     }
@@ -36,7 +45,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .route("/", get(root_handler))
         .route("/metrics", get(get_subscription_list_handler))
-        .with_state(client);
+        .with_state(AppState {
+            tenant_id: Arc::new(tenant_id),
+            client_id: Arc::new(client_id),
+            client_secret: Arc::new(client_secret),
+            http_client: reqwest::Client::new(),
+        });
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await?;
 
