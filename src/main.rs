@@ -1,5 +1,4 @@
 use axum::{extract::State, http::StatusCode, routing::get, Router};
-use reqwest::Client;
 use std::env;
 
 async fn get_subscription_list(client: Client) -> Result<String, String> {
@@ -32,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // Create a reqwest client
-    let client = Client::new();
+    let client = reqwest::Client::new();
 
     let app = Router::new()
         .route("/", get(root_handler))
