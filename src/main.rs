@@ -187,11 +187,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/", get(root_handler))
         .route("/metrics", get(get_subscription_list_handler))
         .with_state(AppState {
-            tenant_id: tenant_id,
-            client_id: client_id,
-            client_secret: client_secret,
-            scope: scope,
-            http_client: http_client,
+            tenant_id,
+            client_id,
+            client_secret,
+            scope,
+            http_client,
         });
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
