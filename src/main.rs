@@ -194,7 +194,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             http_client: http_client,
         });
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await?;
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
 
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await?;
