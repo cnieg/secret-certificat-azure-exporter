@@ -8,7 +8,9 @@ publish = false
 
 [dependencies]
 axum = { version = "0.7", default-features = false, features = ["http1", "tokio"] }
-reqwest = { version = "0.11", default-features = false, features = ["default-tls"] }
+chrono = { version = "0.4", default-features = false, features = ["alloc", "clock", "serde", "std"] }
+reqwest = { version = "0.11", default-features = false, features = ["default-tls", "json"] }
+serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 tokio = { version = "1.35.1", default-features = false, features = ["macros", "net", "rt-multi-thread"] }
 
 [profile.release]
