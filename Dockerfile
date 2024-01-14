@@ -1,13 +1,20 @@
-FROM node:18.18.2-bookworm-slim
+FROM rust:1.75.0-slim-bookworm as builder
 
-USER node
-WORKDIR /usr/src/app
+WORKDIR /app
+RUN apt update && apt install -y pkg-config libssl-dev
 
-ARG NPM_REGISTRY='https://registry.npmjs.org'
+COPY Cargo.* ./
 
-COPY --chown=node:node package*.json ./
-RUN npm install --registry $NPM_REGISTRY && npm cache clean --force
-COPY --chown=node:node . .
+# Downloading and building dependencies (with an empty src/main.rs)
+RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN cargo build --release
 
+# Compiling the actual binary
+COPY . .
+RUN touch -a -m src/main.rs
+RUN cargo build --release
+
+FROM gcr.io/distroless/cc-debian12:latest
+COPY --from=builder /app/target/release/secret-certificat-azure-exporter .
 EXPOSE 3000
-CMD [ "node", "app.js" ]
+ENTRYPOINT [ "./secret-certificat-azure-exporter" ]
