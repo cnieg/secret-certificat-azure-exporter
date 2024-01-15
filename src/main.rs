@@ -61,8 +61,9 @@ async fn get_token(state: &AppState) -> Result<Token, reqwest::Error> {
     Ok(res)
 }
 
-fn parse_credentials(application: &Application, credentials: &[Credential], res: &mut String) {
+fn parse_credentials(application: &Application, credentials: &[Credential]) -> String {
 
+    let mut res = String::new(); // This is what we are going to return
     let mut jours_restants: i64;
     let date_now = Utc::now();
 
@@ -90,6 +91,8 @@ fn parse_credentials(application: &Application, credentials: &[Credential], res:
             application.app_id,
             application.display_name));
     }
+
+    res
 }
 
 async fn get_subscription_list(state: AppState) -> Result<String, reqwest::Error> {
@@ -117,10 +120,10 @@ async fn get_subscription_list(state: AppState) -> Result<String, reqwest::Error
             .replace(['é', 'ê', 'è', 'ë'], "e");
 
         // Handle secrets
-        parse_credentials(&application, &application.password_credentials, &mut res);
+        res.push_str(&parse_credentials(&application, &application.password_credentials));
 
         // Handle certificates
-        parse_credentials(&application, &application.key_credentials, &mut res);
+        res.push_str(&parse_credentials(&application, &application.key_credentials));
     }
 
     Ok(res)
