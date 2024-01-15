@@ -61,7 +61,7 @@ async fn get_token(state: &AppState) -> Result<Token, reqwest::Error> {
     Ok(res)
 }
 
-fn parse_credentials(application: &Application, credentials: &Vec<Credential>, res: &mut String) {
+fn parse_credentials(application: &Application, credentials: &[Credential], res: &mut String) {
 
     let mut jours_restants: i64;
     let date_now = Utc::now();
