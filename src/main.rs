@@ -155,10 +155,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Utilisation du proxy '{proxy_str}'");
 
-    println!(
-        "tenant_id={tenant_id} client_id={client_id} client_secret={client_secret} scope={scope}"
-    );
-
     let app = Router::new()
         .route("/", get(root_handler))
         .route("/metrics", get(get_subscription_list_handler))
