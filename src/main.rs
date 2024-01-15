@@ -20,13 +20,7 @@ struct Token {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
-struct PasswordCredential {
-    end_date_time: DateTime<Utc>,
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-struct KeyCredential {
+struct Credential {
     end_date_time: DateTime<Utc>,
 }
 
@@ -35,8 +29,8 @@ struct KeyCredential {
 struct Application {
     app_id: String,
     display_name: String,
-    password_credentials: Vec<PasswordCredential>,
-    key_credentials: Vec<KeyCredential>,
+    password_credentials: Vec<Credential>,
+    key_credentials: Vec<Credential>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -67,11 +61,39 @@ async fn get_token(state: &AppState) -> Result<Token, reqwest::Error> {
     Ok(res)
 }
 
-async fn get_subscription_list(state: AppState) -> Result<String, reqwest::Error> {
-    let token = get_token(&state).await?;
+fn parse_credentials(application: &Application, credentials: &Vec<Credential>, res: &mut String) {
 
     let mut jours_restants: i64;
     let date_now = Utc::now();
+
+    for (id, credential) in credentials.iter().enumerate() {
+        if date_now > credential.end_date_time {
+            println!(
+                "Le secret n°{id} de l'application {} a expiré le {}",
+                application.display_name,
+                credential.end_date_time.format("%d/%m/%Y")
+            );
+            jours_restants = 0;
+        } else {
+            jours_restants = (credential.end_date_time - date_now).num_days();
+        }
+        res.push_str(&format!(
+            "# HELP application_{}_{id} Secret N°{id} pour l'application {}\n",
+            application.app_id, application.display_name
+        ));
+        res.push_str(&format!(
+            "# TYPE application_{}_{id} gauge\n",
+            application.app_id
+        ));
+        res.push_str(&format!(
+            "application_{}_{id}{{application=\"{}\",type=\"secret\",app=\"Azure Certificat Expiration\"}} {jours_restants}\n\n",
+            application.app_id,
+            application.display_name));
+    }
+}
+
+async fn get_subscription_list(state: AppState) -> Result<String, reqwest::Error> {
+    let token = get_token(&state).await?;
 
     let applications: Applications = state
         .http_client
@@ -95,56 +117,10 @@ async fn get_subscription_list(state: AppState) -> Result<String, reqwest::Error
             .replace(['é', 'ê', 'è', 'ë'], "e");
 
         // Handle secrets
-        for (id, password_credential) in application.password_credentials.iter().enumerate() {
-            if date_now > password_credential.end_date_time {
-                println!(
-                    "Le secret n°{id} de l'application {} a expiré le {}",
-                    application.display_name,
-                    password_credential.end_date_time.format("%d/%m/%Y")
-                );
-                jours_restants = 0;
-            } else {
-                jours_restants = (password_credential.end_date_time - date_now).num_days();
-            }
-            res.push_str(&format!(
-                "# HELP application_{}_{id} Secret N°{id} pour l'application {}\n",
-                application.app_id, application.display_name
-            ));
-            res.push_str(&format!(
-                "# TYPE application_{}_{id} gauge\n",
-                application.app_id
-            ));
-            res.push_str(&format!(
-                "application_{}_{id}{{application=\"{}\",type=\"secret\",app=\"Azure Certificat Expiration\"}} {jours_restants}\n\n",
-                application.app_id,
-                application.display_name));
-        }
+        parse_credentials(&application, &application.password_credentials, &mut res);
 
         // Handle certificates
-        for (id, key_credential) in application.key_credentials.iter().enumerate() {
-            if date_now > key_credential.end_date_time {
-                println!(
-                    "Le certificat n°{id} de l'application {} a expiré le {}",
-                    application.display_name,
-                    key_credential.end_date_time.format("%d/%m/%Y")
-                );
-                jours_restants = 0;
-            } else {
-                jours_restants = (key_credential.end_date_time - date_now).num_days();
-            }
-            res.push_str(&format!(
-                "# HELP application_{}_{id} Certificat N°{id} pour l'application {}\n",
-                application.app_id, application.display_name
-            ));
-            res.push_str(&format!(
-                "# TYPE application_{}_{id} gauge\n",
-                application.app_id
-            ));
-            res.push_str(&format!(
-                "application_{}_{id}{{application=\"{}\",type=\"certificat\",app=\"Azure Certificat Expiration\"}} {jours_restants}\n\n",
-                application.app_id,
-                application.display_name));
-        }
+        parse_credentials(&application, &application.key_credentials, &mut res);
     }
 
     Ok(res)
