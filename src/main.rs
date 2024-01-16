@@ -1,5 +1,6 @@
 use axum::{extract::State, http::StatusCode, routing::get, Router};
 use chrono::{DateTime, Utc};
+use dotenv::dotenv;
 use serde::Deserialize;
 use std::env;
 
@@ -142,6 +143,9 @@ async fn root_handler() -> String {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    dotenv().ok();
+
     let tenant_id = env::var("TENANT_ID").expect("env variable TENANT_ID");
     let client_id = env::var("CLIENT_ID").expect("env variable CLIENT_ID");
     let client_secret = env::var("CLIENT_SECRET").expect("env variable CLIENT_SECRET");
