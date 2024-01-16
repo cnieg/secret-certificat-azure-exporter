@@ -10,7 +10,7 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release
 
 # Compiling the actual binary
-COPY . .
+COPY src/ src
 RUN touch -a -m src/main.rs
 RUN cargo build --release
 
