@@ -63,7 +63,6 @@ async fn get_token(state: &AppState) -> Result<Token, reqwest::Error> {
 }
 
 fn parse_credentials(application: &Application, credentials: &[Credential]) -> String {
-
     let mut res = String::new(); // This is what we are going to return
     let mut jours_restants: i64;
     let date_now = Utc::now();
@@ -121,10 +120,16 @@ async fn get_subscription_list(state: AppState) -> Result<String, reqwest::Error
             .replace(['é', 'ê', 'è', 'ë'], "e");
 
         // Handle secrets
-        res.push_str(&parse_credentials(&application, &application.password_credentials));
+        res.push_str(&parse_credentials(
+            &application,
+            &application.password_credentials,
+        ));
 
         // Handle certificates
-        res.push_str(&parse_credentials(&application, &application.key_credentials));
+        res.push_str(&parse_credentials(
+            &application,
+            &application.key_credentials,
+        ));
     }
 
     Ok(res)
@@ -143,7 +148,6 @@ async fn root_handler() -> String {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-
     dotenv().ok();
 
     let tenant_id = env::var("TENANT_ID").expect("env variable TENANT_ID");
