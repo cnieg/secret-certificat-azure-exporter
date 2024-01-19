@@ -14,6 +14,15 @@ reqwest = { version = "0.11", default-features = false, features = ["json", "rus
 serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
 tokio = { version = "1.35.1", default-features = false, features = ["macros", "net", "rt-multi-thread"] }
 
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+enum_glob_use = "deny"
+pedantic = "deny"
+nursery = "deny"
+unwrap_used = "deny"
+
 [profile.release]
 strip = true	    # Automatically strip symbols from the binary
 lto = "fat"         # Enable link time optimization
