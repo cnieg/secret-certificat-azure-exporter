@@ -154,13 +154,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client_id = env::var("CLIENT_ID").expect("env variable CLIENT_ID");
     let client_secret = env::var("CLIENT_SECRET").expect("env variable CLIENT_SECRET");
     let scope = env::var("SCOPE").expect("env variable SCOPE");
-    let proxy_str = env::var("http_proxy").unwrap_or_else(|_| "http://proxy-http:8080".to_string());
+    let proxy_string = env::var("http_proxy");
+    let proxy_str = proxy_string.as_deref().unwrap_or("http://proxy-http:8080");
 
     // Create an HTTP client with or without a proxy depending on the value of env::var("http_proxy")
-    let http_client = match proxy_str.as_str() {
+    let http_client = match proxy_str {
         "" => reqwest::Client::new(), // no proxy
         _ => reqwest::ClientBuilder::new()
-            .proxy(reqwest::Proxy::https(&proxy_str)?)
+            .proxy(reqwest::Proxy::https(proxy_str)?)
             .build()?,
     };
 
