@@ -41,10 +41,10 @@ struct Applications {
 
 async fn get_token(state: &AppState) -> Result<Token, reqwest::Error> {
     let params = [
-        ("client_id", state.client_id.to_string()),
-        ("scope", state.scope.to_string()),
-        ("client_secret", state.client_secret.to_string()),
-        ("grant_type", "client_credentials".to_string()),
+        ("client_id", state.client_id.as_str()),
+        ("scope", state.scope.as_str()),
+        ("client_secret", state.client_secret.as_str()),
+        ("grant_type", "client_credentials"),
     ];
     let res: Token = state
         .http_client
