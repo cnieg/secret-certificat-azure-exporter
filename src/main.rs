@@ -146,7 +146,7 @@ async fn root_handler() -> String {
     "I'm Alive :D".to_string()
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
