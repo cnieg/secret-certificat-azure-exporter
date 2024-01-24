@@ -1,16 +1,22 @@
 use axum::{extract::State, http::StatusCode, routing::get, Router};
 use chrono::{DateTime, Utc};
 use dotenv::dotenv;
+use reqwest::Client;
 use serde::Deserialize;
-use std::env;
+use std::{env, time::Duration};
+use tokio::{
+    sync::{mpsc, oneshot},
+    time,
+};
+
+#[derive(Debug)]
+enum ActorMessage {
+    GetResponse { respond_to: oneshot::Sender<String> },
+}
 
 #[derive(Clone)]
 struct AppState {
-    tenant_id: String,
-    client_id: String,
-    client_secret: String,
-    scope: String,
-    http_client: reqwest::Client,
+    sender: mpsc::Sender<ActorMessage>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -39,18 +45,22 @@ struct Applications {
     value: Vec<Application>,
 }
 
-async fn get_token(state: &AppState) -> Result<Token, reqwest::Error> {
+async fn get_token(
+    http_client: &Client,
+    tenant_id: &str,
+    client_id: &str,
+    client_secret: &str,
+    scope: &str,
+) -> Result<Token, reqwest::Error> {
     let params = [
-        ("client_id", state.client_id.as_str()),
-        ("scope", state.scope.as_str()),
-        ("client_secret", state.client_secret.as_str()),
+        ("client_id", client_id),
+        ("scope", scope),
+        ("client_secret", client_secret),
         ("grant_type", "client_credentials"),
     ];
-    let res: Token = state
-        .http_client
+    let res: Token = http_client
         .post(format!(
-            "https://login.microsoftonline.com/{}/oauth2/v2.0/token",
-            state.tenant_id
+            "https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token",
         ))
         .form(&params)
         .send()
@@ -95,11 +105,16 @@ fn parse_credentials(application: &Application, credentials: &[Credential]) -> S
     res
 }
 
-async fn get_subscription_list(state: AppState) -> Result<String, reqwest::Error> {
-    let token = get_token(&state).await?;
+async fn get_subscription_list(
+    http_client: &Client,
+    tenant_id: &str,
+    client_id: &str,
+    client_secret: &str,
+    scope: &str,
+) -> Result<String, reqwest::Error> {
+    let token = get_token(http_client, tenant_id, client_id, client_secret, scope).await?;
 
-    let applications: Applications = state
-        .http_client
+    let applications: Applications = http_client
         .get("https://graph.microsoft.com/v1.0/applications")
         .bearer_auth(&token.access_token)
         .send()
@@ -135,19 +150,10 @@ async fn get_subscription_list(state: AppState) -> Result<String, reqwest::Error
     Ok(res)
 }
 
-async fn get_subscription_list_handler(State(state): State<AppState>) -> (StatusCode, String) {
-    match get_subscription_list(state).await {
-        Ok(res) => (StatusCode::OK, res),
-        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-    }
-}
+#[allow(clippy::redundant_pub_crate)] // Because clippy is not happy with the tokio::select macro
+async fn secrets_actor(mut receiver: mpsc::Receiver<ActorMessage>) {
+    let mut response = String::new(); // The is the state this actor is handling
 
-async fn root_handler() -> String {
-    "I'm Alive :D".to_string()
-}
-
-#[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
     let tenant_id = env::var("TENANT_ID").expect("env variable TENANT_ID");
@@ -161,22 +167,72 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let http_client = match proxy_str {
         "" => reqwest::Client::new(), // no proxy
         _ => reqwest::ClientBuilder::new()
-            .proxy(reqwest::Proxy::https(proxy_str)?)
-            .build()?,
+            .proxy(reqwest::Proxy::https(proxy_str).expect("Failed to add proxy"))
+            .build()
+            .expect("Failed to build reqwest client"),
     };
 
     println!("Utilisation du proxy '{proxy_str}'");
 
+    // State (response) initialization is done below (the first call to timer.tick() returns immediately)
+
+    // We now wait for some messages
+    let mut timer = time::interval(Duration::from_secs(12 * 3600)); // 12 hours
+
+    loop {
+        tokio::select! {
+            msg = receiver.recv() => match msg {
+                Some(msg) => match msg {
+                    ActorMessage::GetResponse { respond_to } => respond_to.send(response.clone()).expect("Failed to send reponse")
+                },
+                None => break
+            },
+            _ = timer.tick() => {
+                // State (response) update
+                match get_subscription_list(&http_client, &tenant_id, &client_id, &client_secret, &scope).await
+                {
+                    Ok(res) => response = res,
+                    Err(e) => {
+                        println!("get_subscription_list() failed with : {e}");
+                        response.clear();
+                    },
+                }
+            }
+        }
+    }
+}
+
+async fn root_handler() -> &'static str {
+    "I'm Alive :D"
+}
+
+async fn get_subscription_list_handler(State(state): State<AppState>) -> (StatusCode, String) {
+    // We are going to send a message to our actor and wait for an answer
+    // But first, we create a oneshot channel to get the actor's response
+    let (send, recv) = oneshot::channel();
+    let msg = ActorMessage::GetResponse { respond_to: send };
+
+    // Ignore send errors. If this send fails, so does the
+    // recv.await below. There's no reason to check for the
+    // same failure twice.
+    let _ = state.sender.send(msg).await;
+
+    match recv.await {
+        Ok(res) => (StatusCode::OK, res),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+    }
+}
+
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create a channel and then an actor
+    let (sender, receiver) = mpsc::channel(8);
+    tokio::spawn(secrets_actor(receiver));
+
     let app = Router::new()
         .route("/", get(root_handler))
         .route("/metrics", get(get_subscription_list_handler))
-        .with_state(AppState {
-            tenant_id,
-            client_id,
-            client_secret,
-            scope,
-            http_client,
-        });
+        .with_state(AppState { sender });
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
 
