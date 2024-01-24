@@ -176,9 +176,9 @@ async fn secrets_actor(mut receiver: mpsc::Receiver<ActorMessage>) {
 
     // State (response) initialization is done below (the first call to timer.tick() returns immediately)
 
-    // We now wait for some messages
     let mut timer = time::interval(Duration::from_secs(12 * 3600)); // 12 hours
 
+    // We now wait for some messages (or for the timer to tick)
     loop {
         tokio::select! {
             msg = receiver.recv() => match msg {
