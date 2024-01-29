@@ -9,6 +9,8 @@ use tokio::{
     time,
 };
 
+const MICROSOFT_DATA_REFRESH_HOURS_DEFAULT: u8 = 6;
+
 #[derive(Debug)]
 enum ActorMessage {
     GetResponse { respond_to: oneshot::Sender<String> },
@@ -162,6 +164,20 @@ async fn secrets_actor(mut receiver: mpsc::Receiver<ActorMessage>) {
     let scope = env::var("SCOPE").expect("env variable SCOPE");
     let proxy_string = env::var("http_proxy");
     let proxy_str = proxy_string.as_deref().unwrap_or("http://proxy-http:8080");
+    let microsoft_data_refresh_hours = env::var("MICROSOFT_DATA_REFRESH_HOURS").map_or(
+        MICROSOFT_DATA_REFRESH_HOURS_DEFAULT,
+        |value| {
+            value
+                .parse()
+                .map_or(MICROSOFT_DATA_REFRESH_HOURS_DEFAULT, |value| {
+                    if value > 0 && value <= 24 {
+                        value
+                    } else {
+                        MICROSOFT_DATA_REFRESH_HOURS_DEFAULT
+                    }
+                })
+        },
+    );
 
     // Create an HTTP client with or without a proxy depending on the value of env::var("http_proxy")
     let http_client = match proxy_str {
@@ -176,7 +192,9 @@ async fn secrets_actor(mut receiver: mpsc::Receiver<ActorMessage>) {
 
     // State (response) initialization is done below (the first call to timer.tick() returns immediately)
 
-    let mut timer = time::interval(Duration::from_secs(12 * 3600)); // 12 hours
+    let mut timer = time::interval(Duration::from_secs(
+        u64::from(microsoft_data_refresh_hours) * 3600,
+    ));
 
     // We now wait for some messages (or for the timer to tick)
     loop {
