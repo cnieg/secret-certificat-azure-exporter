@@ -1,0 +1,29 @@
+[package]
+name = "secret-certificat-azure-exporter"
+version = "1.0.0"
+edition = "2021"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+axum = { version = "0.7", default-features = false, features = ["http1", "tokio"] }
+chrono = { version = "0.4", default-features = false, features = ["alloc", "clock", "serde", "std"] }
+dotenv = { version = "0.15", default-features = false }
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1.0", default-features = false, features = ["std", "derive"] }
+tokio = { version = "1.36", default-features = false, features = ["macros", "net", "rt"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+enum_glob_use = "deny"
+pedantic = "deny"
+nursery = "deny"
+unwrap_used = "deny"
+
+[profile.release]
+strip = true	    # Automatically strip symbols from the binary
+lto = "fat"         # Enable link time optimization
+codegen-units = 1

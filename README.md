@@ -19,13 +19,18 @@ Provide the following environment variables (locally you can use a `.env` file) 
 TENANT_ID=<Microsoft Tenant ID>
 CLIENT_ID=<App ID (client)>
 CLIENT_SECRET=<"APPLICATION-EXPORTER" client secret>
-SCOPE=https://graph.microsoft.com//.default
+SCOPE=https://graph.microsoft.com/.default
+MICROSOFT_DATA_REFRESH_HOURS=6 (should be > 0 and <= 24 or else, it will be set to the default value: 6)
 ```
 
 Run the following commands :
 
+if you have cargo already installed:
 ```
-npm install
-npm start
+cargo build --release
 ```
 
+if you want to build a OCI image:
+```
+docker build . -t secret-certificat-azure-exporter
+```
