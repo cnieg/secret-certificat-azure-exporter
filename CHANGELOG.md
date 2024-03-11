@@ -1,3 +1,7 @@
+## [2.0.0](https://github.com/cnieg/secret-certificat-azure-exporter/compare/1.0.4...2.0.0) (2024-03-11)
+
+* Rewrite in Rust
+
 ## [1.0.4](https://github.com/cnieg/secret-certificat-azure-exporter/compare/1.0.3...1.0.4) (2023-05-31)
 
 
