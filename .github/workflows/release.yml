@@ -27,7 +27,6 @@ jobs:
           mode: Mainline
           increment: Inherit
           continuous-delivery-fallback-tag: ci
-          tag-prefix: '[vV]'
           major-version-bump-message: '(breaking|major|incompatible):'
           minor-version-bump-message: '(feature|minor|enhancement|new|update|improvement|upgrade|feat):'
           patch-version-bump-message: '(fix|patch|bugfix|hotfix|correction|adjustment|tweak):'
