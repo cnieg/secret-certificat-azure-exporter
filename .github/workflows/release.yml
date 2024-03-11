@@ -47,6 +47,10 @@ jobs:
         with:
           useConfigFile: true
 
+      - name: Update version in Cargo.toml
+        run: |
+          sed -i 's|^version = ".*"|version = "2.0.0"|' Cargo.toml
+
       # - name: Release
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -68,3 +72,9 @@ jobs:
         with:
           push: false
           tags: cnieg/secret-certificat-azure-exporter:${{ env.semVer }}
+
+      - name: add and commit Cargo.* files
+        uses: EndBug/add-and-commit@v9.1.4
+        add: 'Cargo.*'
+        message: 'chore(release): ${{ env.semVer }} [skip ci]'
+        tag: '${{ env.semVer }}'
