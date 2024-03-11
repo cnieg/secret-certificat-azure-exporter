@@ -75,6 +75,7 @@ jobs:
 
       - name: add and commit Cargo.* files
         uses: EndBug/add-and-commit@v9.1.4
-        add: 'Cargo.*'
-        message: 'chore(release): ${{ env.semVer }} [skip ci]'
-        tag: '${{ env.semVer }}'
+        with:
+          add: 'Cargo.*'
+          message: 'chore(release): ${{ env.semVer }} [skip ci]'
+          tag: '${{ env.semVer }}'
