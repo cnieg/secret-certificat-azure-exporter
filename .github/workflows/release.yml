@@ -20,7 +20,34 @@ jobs:
 
       - name: Create GitVersion.yml
         run: |
-          pwd ; ls -la
+          cat <<EOF > GitVersion.yml
+          assembly-versioning-scheme: MajorMinorPatch
+          assembly-file-versioning-scheme: MajorMinorPatch
+          assembly-informational-format: '{InformationalVersion}'
+          mode: Mainline
+          increment: Inherit
+          continuous-delivery-fallback-tag: ci
+          tag-prefix: '[vV]'
+          major-version-bump-message: '(breaking|major|incompatible):'
+          minor-version-bump-message: '(feature|minor|enhancement|new|update|improvement|upgrade|feat):'
+          patch-version-bump-message: '(fix|patch|bugfix|hotfix|correction|adjustment|tweak):'
+          no-bump-message: '(none|skip|no-release|trivial|docs|documentation|style|refactor|chore|test):'
+          legacy-semver-padding: 4
+          build-metadata-padding: 4
+          commits-since-version-source-padding: 4
+          tag-pre-release-weight: 60000
+          commit-message-incrementing: Enabled
+          merge-message-formats: {}
+          update-build-number: true
+          EOF
+
+      - name: Determine Version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v0
+
+      - name: Display semver
+        run: |
+          echo ${{ env.semVer }}
 
       # - name: Release
       #   env:
