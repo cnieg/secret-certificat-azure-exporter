@@ -64,13 +64,13 @@ jobs:
           push: true
           tags: cnieg/secret-certificat-azure-exporter:${{ env.semVer }}
 
-      - name: Update Cargo.lock
-        uses: moonrepo/setup-rust@v1
-      - run: cargo check
-
-      - name: add and commit Cargo.* files
-        uses: EndBug/add-and-commit@v9.1.4
+      - name: Create tag
+        uses: rickstaa/action-create-tag@v1.7.2
         with:
-          add: 'Cargo.*'
-          message: 'skip: release ${{ env.semVer }} [skip ci]'
-          tag: '${{ env.semVer }}'
+          tag: ${{ env.semVer }}
+
+      - name: Create a GitHub release
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          generateReleaseNotes: true
+          tag: ${{ env.semVer }}
