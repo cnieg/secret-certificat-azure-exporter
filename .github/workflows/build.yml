@@ -1,7 +1,10 @@
 name: Build
 on:
   push:
+    branches-ignore:
+      - main
   pull_request:
+
 jobs:
   release:
     name: Build
