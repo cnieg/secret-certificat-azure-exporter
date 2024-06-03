@@ -3,8 +3,9 @@ use chrono::{DateTime, Utc};
 use dotenv::dotenv;
 use reqwest::Client;
 use serde::Deserialize;
-use std::{env, time::Duration};
+use std::{env, future::IntoFuture, time::Duration};
 use tokio::{
+    signal::unix::{signal, SignalKind},
     sync::{mpsc, oneshot},
     time,
 };
@@ -201,7 +202,7 @@ async fn secrets_actor(mut receiver: mpsc::Receiver<ActorMessage>) {
         tokio::select! {
             msg = receiver.recv() => match msg {
                 Some(msg) => match msg {
-                    ActorMessage::GetResponse { respond_to } => respond_to.send(response.clone()).expect("Failed to send reponse")
+                    ActorMessage::GetResponse { respond_to } => respond_to.send(response.clone()).unwrap_or_else(|_| println!("Failed to send reponse : oneshot channel was closed"))
                 },
                 None => break
             },
@@ -243,9 +244,12 @@ async fn get_subscription_list_handler(State(state): State<AppState>) -> (Status
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // An infinite stream of 'SIGTERM' signals.
+    let mut sigterm_stream = signal(SignalKind::terminate())?;
+
     // Create a channel and then an actor
     let (sender, receiver) = mpsc::channel(8);
-    tokio::spawn(secrets_actor(receiver));
+    let actor_handle = tokio::spawn(secrets_actor(receiver));
 
     let app = Router::new()
         .route("/", get(root_handler))
@@ -255,7 +259,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
 
     println!("listening on {}", listener.local_addr()?);
-    axum::serve(listener, app).await?;
 
-    Ok(())
+    // Waiting for one of the following :
+    // - a SIGTERM signal
+    // - the actor to finish/panic
+    // - the axum server to finish
+    tokio::select! {
+        _ = sigterm_stream.recv() => {
+            println!("Received a SIGTERM signal! exiting.");
+            Ok(())
+        },
+        _ = actor_handle => {
+            println!("The actor died! exiting.");
+            Ok(())
+        },
+        _ = axum::serve(listener, app).into_future() => {
+            println!("The server died! exiting.");
+            Ok(())
+        }
+    }
 }
