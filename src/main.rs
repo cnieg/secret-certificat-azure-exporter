@@ -201,7 +201,7 @@ async fn secrets_actor(mut receiver: mpsc::Receiver<ActorMessage>) {
         tokio::select! {
             msg = receiver.recv() => match msg {
                 Some(msg) => match msg {
-                    ActorMessage::GetResponse { respond_to } => respond_to.send(response.clone()).expect("Failed to send reponse")
+                    ActorMessage::GetResponse { respond_to } => respond_to.send(response.clone()).unwrap_or_else(|_| println!("Failed to send reponse : oneshot channel was closed"))
                 },
                 None => break
             },
