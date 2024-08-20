@@ -19,9 +19,10 @@ unsafe_code = "forbid"
 
 [lints.clippy]
 enum_glob_use = "deny"
-pedantic = "deny"
-nursery = "deny"
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
 unwrap_used = "deny"
+redundant_pub_crate = "allow"
 
 [profile.release]
 strip = true	    # Automatically strip symbols from the binary
