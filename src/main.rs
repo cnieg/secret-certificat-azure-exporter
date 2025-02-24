@@ -1,11 +1,11 @@
-use axum::{extract::State, http::StatusCode, routing::get, Router};
+use axum::{Router, extract::State, http::StatusCode, routing::get};
 use chrono::{DateTime, Utc};
 use dotenv::dotenv;
 use reqwest::Client;
 use serde::Deserialize;
 use std::{env, future::IntoFuture, time::Duration};
 use tokio::{
-    signal::unix::{signal, SignalKind},
+    signal::unix::{SignalKind, signal},
     sync::{mpsc, oneshot},
     time,
 };
