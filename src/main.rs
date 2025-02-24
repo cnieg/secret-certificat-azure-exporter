@@ -75,7 +75,11 @@ async fn get_token(
     Ok(res)
 }
 
-fn parse_credentials(application: &Application, credentials: &[Credential], cred_type: &str) -> String {
+fn parse_credentials(
+    application: &Application,
+    credentials: &[Credential],
+    cred_type: &str,
+) -> String {
     let mut res = String::new(); // This is what we are going to return
     let mut jours_restants: i64;
     let date_now = Utc::now();
@@ -141,14 +145,14 @@ async fn get_subscription_list(
         res.push_str(&parse_credentials(
             &application,
             &application.password_credentials,
-            "secret"
+            "secret",
         ));
 
         // Handle certificates
         res.push_str(&parse_credentials(
             &application,
             &application.key_credentials,
-            "certificate"
+            "certificate",
         ));
     }
 
