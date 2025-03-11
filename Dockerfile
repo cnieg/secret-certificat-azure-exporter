@@ -7,12 +7,12 @@ COPY Cargo.* ./
 
 # Downloading and building dependencies (with an empty src/main.rs)
 RUN mkdir src && echo "fn main() {}" > src/main.rs
-RUN cargo build --release
+RUN cargo build --release --locked
 
 # Compiling the actual binary
 COPY src/ src
 RUN touch -a -m src/main.rs
-RUN cargo build --release
+RUN cargo build --release --locked
 
 FROM gcr.io/distroless/cc-debian12:nonroot
 COPY --from=builder /app/target/release/secret-certificat-azure-exporter .
