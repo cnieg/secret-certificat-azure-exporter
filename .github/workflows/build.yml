@@ -30,8 +30,6 @@ jobs:
       - name: Determine Version
         id: gitversion
         uses: gittools/actions/gitversion/execute@v4.0.0
-        with:
-          useConfigFile: true
 
       - name: Push docker image release
         uses: docker/build-push-action@v6
