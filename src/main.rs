@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 use dotenv::dotenv;
 use reqwest::Client;
 use serde::Deserialize;
+use std::fmt::Write;
 use std::{env, future::IntoFuture, time::Duration};
 use tokio::{
     signal::unix::{SignalKind, signal},
@@ -95,18 +96,24 @@ fn parse_credentials(
         } else {
             jours_restants = (credential.end_date_time - date_now).num_days();
         }
-        res.push_str(&format!(
-            "# HELP application_{}_{id} Secret N°{id} pour l'application {}\n",
+        writeln!(
+            &mut res,
+            "# HELP application_{}_{id} Secret N°{id} pour l'application {}",
             application.app_id, application.display_name
-        ));
-        res.push_str(&format!(
-            "# TYPE application_{}_{id} gauge\n",
+        )
+        .unwrap();
+        writeln!(
+            &mut res,
+            "# TYPE application_{}_{id} gauge",
             application.app_id
-        ));
-        res.push_str(&format!(
-            "application_{}_{id}{{application=\"{}\",type=\"{cred_type}\",app=\"Azure {cred_type} Expiration\",app_id=\"{0}_{id}\"}} {jours_restants}\n\n",
+        )
+        .unwrap();
+        writeln!(
+            &mut res,
+            "application_{}_{id}{{application=\"{}\",type=\"{cred_type}\",app=\"Azure {cred_type} Expiration\",app_id=\"{0}_{id}\"}} {jours_restants}",
             application.app_id,
-            application.display_name));
+            application.display_name
+        ).unwrap();
     }
 
     res
