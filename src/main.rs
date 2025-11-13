@@ -101,19 +101,19 @@ fn parse_credentials(
             "# HELP application_{}_{id} Secret N°{id} pour l'application {}",
             application.app_id, application.display_name
         )
-        .unwrap();
+        .expect("Failed to write to 'res'");
         writeln!(
             &mut res,
             "# TYPE application_{}_{id} gauge",
             application.app_id
         )
-        .unwrap();
+        .expect("Failed to write to 'res'");
         writeln!(
             &mut res,
             "application_{}_{id}{{application=\"{}\",type=\"{cred_type}\",app=\"Azure {cred_type} Expiration\",app_id=\"{0}_{id}\"}} {jours_restants}",
             application.app_id,
             application.display_name
-        ).unwrap();
+        ).expect("Failed to write to 'res'");
     }
 
     res
