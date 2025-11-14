@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -19,7 +19,7 @@ jobs:
         run: cargo fmt --check
 
       - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v4.0.1
+        uses: gittools/actions/gitversion/setup@v4.2.0
 
       - name: Create GitVersion.yml
         run: |
@@ -27,12 +27,16 @@ jobs:
           major-version-bump-message: '(breaking|major|incompatible):'
           minor-version-bump-message: '(feature|minor|enhancement|new|update|improvement|upgrade|feat):'
           patch-version-bump-message: '(fix|patch|bugfix|hotfix|correction|adjustment|tweak):'
-          no-bump-message: '(none|skip|no-release|trivial|docs|documentation|style|refactor|chore|test):'
+          no-bump-message: '(none|skip|no-release|trivial|docs|documentation|style|refactor|chore|chore\(deps\)|test):'
           EOF
 
-      - name: Determine Version
+      - name: Run GitVersion
         id: gitversion
-        uses: gittools/actions/gitversion/execute@v4.0.1
+        uses: gittools/actions/gitversion/execute@v4.2.0
+
+      - name: Display GitVersion majorMinorPatch
+        run: |
+          echo "majorMinorPatch : ${{ env.majorMinorPatch }}"
 
       - name: Push docker image release
         uses: docker/build-push-action@v6
