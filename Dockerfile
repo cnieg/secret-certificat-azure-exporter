@@ -14,7 +14,7 @@ COPY src/ src
 RUN touch -a -m src/main.rs
 RUN cargo build --release --locked
 
-FROM gcr.io/distroless/cc-debian12:nonroot
+FROM gcr.io/distroless/cc-debian13:nonroot
 COPY --from=builder /app/target/release/secret-certificat-azure-exporter .
 EXPOSE 3000
 ENTRYPOINT [ "./secret-certificat-azure-exporter" ]
