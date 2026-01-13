@@ -15,7 +15,9 @@ const MICROSOFT_DATA_REFRESH_HOURS_DEFAULT: u8 = 6;
 
 #[derive(Debug)]
 enum ActorMessage {
-    GetResponse { respond_to: oneshot::Sender<String> },
+    GetResponse {
+        respond_to: oneshot::Sender<Result<String, String>>,
+    },
 }
 
 #[derive(Clone)]
@@ -80,7 +82,7 @@ fn parse_credentials(
     application: &Application,
     credentials: &[Credential],
     cred_type: &str,
-) -> String {
+) -> Result<String, core::fmt::Error> {
     let mut res = String::new(); // This is what we are going to return
     let mut jours_restants: i64;
     let date_now = Utc::now();
@@ -100,23 +102,20 @@ fn parse_credentials(
             &mut res,
             "# HELP application_{}_{id} Secret N°{id} pour l'application {}",
             application.app_id, application.display_name
-        )
-        .expect("Failed to write to 'res'");
+        )?;
         writeln!(
             &mut res,
             "# TYPE application_{}_{id} gauge",
             application.app_id
-        )
-        .expect("Failed to write to 'res'");
+        )?;
         writeln!(
             &mut res,
             "application_{}_{id}{{application=\"{}\",type=\"{cred_type}\",app=\"Azure {cred_type} Expiration\",app_id=\"{0}_{id}\"}} {jours_restants}",
-            application.app_id,
-            application.display_name
-        ).expect("Failed to write to 'res'");
+            application.app_id, application.display_name
+        )?;
     }
 
-    res
+    Ok(res)
 }
 
 async fn get_subscription_list(
@@ -125,7 +124,7 @@ async fn get_subscription_list(
     client_id: &str,
     client_secret: &str,
     scope: &str,
-) -> Result<String, reqwest::Error> {
+) -> Result<String, Box<dyn core::error::Error>> {
     let token = get_token(http_client, tenant_id, client_id, client_secret, scope).await?;
 
     let applications: Applications = http_client
@@ -149,18 +148,12 @@ async fn get_subscription_list(
             .replace(['é', 'ê', 'è', 'ë'], "e");
 
         // Handle secrets
-        res.push_str(&parse_credentials(
-            &application,
-            &application.password_credentials,
-            "secret",
-        ));
+        let metrics = parse_credentials(&application, &application.password_credentials, "secret")?;
+        res.push_str(&metrics);
 
         // Handle certificates
-        res.push_str(&parse_credentials(
-            &application,
-            &application.key_credentials,
-            "certificate",
-        ));
+        let metrics = parse_credentials(&application, &application.key_credentials, "certificate")?;
+        res.push_str(&metrics);
     }
 
     Ok(res)
@@ -168,7 +161,8 @@ async fn get_subscription_list(
 
 #[allow(clippy::redundant_pub_crate)] // Because clippy is not happy with the tokio::select macro
 async fn secrets_actor(mut receiver: mpsc::Receiver<ActorMessage>) {
-    let mut response = String::new(); // The is the state this actor is handling
+    // Init response with error message (no data yet) because get_subscription_list has never been called yet
+    let mut response: Result<String, String> = Err("No data yet".to_owned());
 
     dotenv().ok();
 
@@ -223,10 +217,10 @@ async fn secrets_actor(mut receiver: mpsc::Receiver<ActorMessage>) {
                 // State (response) update
                 match get_subscription_list(&http_client, &tenant_id, &client_id, &client_secret, &scope).await
                 {
-                    Ok(res) => response = res,
+                    Ok(res) => response = Ok(res),
                     Err(e) => {
                         println!("get_subscription_list() failed with : {e}");
-                        response.clear();
+                        response = Err(e.to_string());
                     },
                 }
             }
@@ -250,13 +244,14 @@ async fn get_subscription_list_handler(State(state): State<AppState>) -> (Status
     let _ = state.sender.send(msg).await;
 
     match recv.await {
-        Ok(res) => (StatusCode::OK, res),
+        Ok(Ok(res)) => (StatusCode::OK, res),
+        Ok(Err(err)) => (StatusCode::INTERNAL_SERVER_ERROR, err),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
     }
 }
 
 #[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Box<dyn core::error::Error>> {
     // An infinite stream of 'SIGTERM' signals.
     let mut sigterm_stream = signal(SignalKind::terminate())?;
 
