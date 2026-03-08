@@ -39,7 +39,7 @@ jobs:
           echo "majorMinorPatch : ${{ env.majorMinorPatch }}"
 
       - name: Push docker image release
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           push: false
           tags: cnieg/secret-certificat-azure-exporter:latest
