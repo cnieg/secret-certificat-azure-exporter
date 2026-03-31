@@ -58,7 +58,7 @@ jobs:
           tag: ${{ env.majorMinorPatch }}
 
       - name: Create a GitHub release
-        uses: ncipollo/release-action@v1.20.0
+        uses: ncipollo/release-action@v1.21.0
         with:
           generateReleaseNotes: true
           tag: ${{ env.majorMinorPatch }}
